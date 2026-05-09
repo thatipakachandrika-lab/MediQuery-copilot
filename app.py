@@ -82,7 +82,6 @@ h1 {
 st.title("🏥 MediQuery Copilot")
 st.caption("Ask questions and get insights.")
 
-
 with st.sidebar:
     st.header("About")
     st.write(
@@ -176,6 +175,37 @@ Question: {question}
     return llm.invoke(prompt)
 
 # -----------------------
+# Validate Generated Code
+# -----------------------
+def validate_generated_code(code, df):
+    try:
+        code = code.replace("```python", "").replace("```", "").strip()
+        lines = code.split("\n")
+
+        df_lines = [line.strip() for line in lines if line.strip().startswith("df")]
+
+        if not df_lines:
+            return False, "Sorry, I couldn't understand that query. Try rephrasing."
+
+        clean_code = df_lines[-1]
+
+        blocked_terms = ["import", "open(", "exec(", "eval(", "os.", "sys.", "subprocess", "__"]
+
+        for term in blocked_terms:
+            if term in clean_code:
+                return False, "Unsafe query blocked."
+
+        column_used = any(col in clean_code for col in df.columns)
+
+        if not column_used:
+            return False, "I couldn't match the question to a valid dataset column."
+
+        return True, clean_code
+
+    except Exception:
+        return False, "Validation failed. Try rephrasing."
+
+# -----------------------
 # Safe Execution
 # -----------------------
 def safe_execute(code, df):
@@ -213,22 +243,31 @@ if "messages" not in st.session_state:
 # Display chat history
 for msg in st.session_state.messages:
     with st.chat_message(msg["role"]):
-        if isinstance(msg["content"], (pd.Series, pd.DataFrame)):
-            st.dataframe(msg["content"])
-        else:
+
+        if msg["role"] == "user":
             st.write(msg["content"])
+
+        else:
+            result = msg["result"]
+
+            if isinstance(result, (pd.Series, pd.DataFrame)):
+                st.dataframe(result)
+
+                if len(result) <= 15:
+                    try:
+                        st.bar_chart(result)
+                    except:
+                        pass
+                else:
+                    st.write("Too many categories to plot.")
+            else:
+                st.write(result)
 
 # -----------------------
 # Input Section (Centered)
 # -----------------------
 st.markdown("---")
-
-col1, col2 = st.columns([1, 2])
-
-with col2:
-    query = st.chat_input("Ask your question...")
-
-st.markdown("---")
+query = st.chat_input("Ask your question...")
 
 # -----------------------
 # Handle Query
@@ -243,9 +282,18 @@ if query:
 
     try:
         code = generate_code(query)
-        result = safe_execute(code, df)
 
-        st.session_state.messages.append({"role": "assistant", "content": result})
+        is_valid, validated_code_or_message = validate_generated_code(code, df)
+
+        if is_valid:
+            result = safe_execute(validated_code_or_message, df)
+        else:
+            result = validated_code_or_message
+
+        st.session_state.messages.append({
+            "role": "assistant",
+            "result": result
+        })
 
         with st.chat_message("assistant"):
             if isinstance(result, (pd.Series, pd.DataFrame)):
@@ -261,6 +309,6 @@ if query:
             else:
                 st.write(result)
 
-    except Exception:
+    except Exception as e:
         with st.chat_message("assistant"):
-            st.write("Something went wrong. Try rephrasing.")
+            st.write(f"Something went wrong: {e}")
