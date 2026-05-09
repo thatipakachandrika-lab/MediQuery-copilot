@@ -1,9 +1,17 @@
 # 🏥 MediQuery AI
+Live Demo (Local): Run using Streamlit
 
 MediQuery AI is an AI-powered data assistant that allows users to ask questions in natural language and instantly get insights from structured healthcare datasets.
 
 It leverages a local Large Language Model (LLM) via Ollama to translate user queries into pandas code and executes them safely to return accurate results.
 
+## 🚧 Project Status
+
+This project is actively being improved and will continue to evolve over time.
+
+Current work focuses on improving query accuracy, strengthening validation, expanding supported analytics, and making the assistant more reliable for real-world data exploration use cases.
+
+The current version is a working MVP, and future updates will continue to enhance performance, usability, and analytical capabilities.
 ---
 
 ## 🚀 Features
