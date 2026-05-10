@@ -11,6 +11,10 @@ This project is actively being improved and will continue to evolve over time.
 
 Current work focuses on improving query accuracy, strengthening validation, expanding supported analytics, and making the assistant more reliable for real-world data exploration use cases.
 
+## App Preview
+
+![MediQuery Copilot Preview](assets/app_preview.png)
+
 The current version is a working MVP, and future updates will continue to enhance performance, usability, and analytical capabilities.
 ---
 
